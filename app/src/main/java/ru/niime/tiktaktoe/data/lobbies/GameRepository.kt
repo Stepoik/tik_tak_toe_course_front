@@ -12,7 +12,7 @@ import ru.niime.tiktaktoe.domain.models.Game
 class GameRepository(private val client: HttpClient) {
     suspend fun getOpenGames(): Result<List<Game>> {
         return runCatching {
-            val dtoList: List<GameDto> = client.get("${NetworkConfig.BASE_URL}/lobbies").body()
+            val dtoList: List<GameDto> = client.get("${NetworkConfig.BASE_URL}/games").body()
             dtoList.map {
                 Game(
                     id = it.gameId,
@@ -25,7 +25,7 @@ class GameRepository(private val client: HttpClient) {
 
     suspend fun createGame(): Result<String> {
         return runCatching {
-            client.post("${NetworkConfig.BASE_URL}/create_game").body<CreateGameResponse>().gameId
+            client.post("${NetworkConfig.BASE_URL}/games").body<CreateGameResponse>().gameId
         }
     }
 }
