@@ -31,6 +31,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Serializable
 data class GameMessage(
@@ -68,6 +69,8 @@ class GameSocketClient(
     private val _isConnected = MutableStateFlow(false)
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
+    private var isActive = AtomicBoolean(true)
+
     private val wsUrl = "$baseUrl/ws/$gameId/$playerId".replace("http", "ws")
 
     suspend fun connect() {
@@ -92,14 +95,14 @@ class GameSocketClient(
                     println("Receive error: ${e.message}")
                 } finally {
                     _isConnected.value = false
-                    tryReconnect()
+                    if (isActive.get()) tryReconnect()
                 }
             }
 
         } catch (e: Exception) {
             println("Initial connect failed: ${e.message}")
             _isConnected.value = false
-            tryReconnect()
+            if (isActive.get()) tryReconnect()
         }
     }
 
@@ -126,7 +129,7 @@ class GameSocketClient(
     }
 
     private fun tryReconnect() {
-        if (reconnectJob?.isActive == true) return
+        if (reconnectJob?.isActive == true || !isActive.get()) return
 
         reconnectJob = scope.launch {
             repeat(reconnectAttempts) { attempt ->
@@ -173,6 +176,7 @@ class GameSocketClient(
     }
 
     suspend fun disconnect() {
+        isActive.set(false)
         reconnectJob?.cancel()
         receiveJob?.cancel()
         session?.close()

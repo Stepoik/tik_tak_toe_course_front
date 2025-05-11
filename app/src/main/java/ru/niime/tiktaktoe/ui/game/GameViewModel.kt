@@ -46,6 +46,7 @@ class GameViewModel(
 
     fun exit() {
         viewModelScope.launch {
+            session?.disconnect()
             _effect.emit(GameEffect.NavigateLobbies)
         }
     }

@@ -1,5 +1,6 @@
 package ru.niime.tiktaktoe.ui.game
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +35,9 @@ import ru.niime.tiktaktoe.ui.AppRoute
 fun GameScreenUi(navController: NavController, gameId: String) {
     val viewModel = koinViewModel<GameViewModel>(parameters = { parametersOf(gameId) })
     val state = viewModel.state.collectAsState().value
+    BackHandler {
+        viewModel.exit()
+    }
     LaunchedEffect(Unit) {
         viewModel.effect.collect {
             when (it) {
@@ -52,8 +56,18 @@ fun GameScreenUi(navController: NavController, gameId: String) {
         )
     } else {
         Scaffold {
-            Button(onClick = viewModel::sendReady, modifier = Modifier.padding(it)) {
-                Text("Я готов")
+            Box(Modifier
+                .fillMaxSize()
+                .padding(16.dp)) {
+                Button(
+                    onClick = viewModel::sendReady,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                    modifier = Modifier
+                        .padding(it)
+                        .align(Alignment.TopEnd)
+                ) {
+                    Text("Я готов", color = Color.White)
+                }
             }
         }
     }
@@ -123,7 +137,7 @@ fun GameScreenUi(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            when(gameResult) {
+            when (gameResult) {
                 is GameResult.Winner -> {
                     Text(
                         text = "Победил: ${gameResult.winner}",
@@ -131,6 +145,7 @@ fun GameScreenUi(
                         color = Color(0xFF388E3C)
                     )
                 }
+
                 is GameResult.Draw -> {
                     Text(
                         text = "Ничья!",
